@@ -7,7 +7,7 @@ class IsSuperAdmin(BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
-        return user and user.get("role_type") == "super_admin"
+        return user and user.role_type == "super_admin"
 
 class IsArtistManager(BasePermission):
     """
@@ -15,7 +15,7 @@ class IsArtistManager(BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
-        return user and user.get("role_type") == "artist_manager"
+        return user and user.role_type == "artist_manager"
 
 class IsArtist(BasePermission):
     """
@@ -23,7 +23,7 @@ class IsArtist(BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
-        return user and user.get("role_type") == "artist"
+        return user and user.role_type == "artist"
 
 class IsApprovedUser(BasePermission):
     """
@@ -31,4 +31,4 @@ class IsApprovedUser(BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
-        return user and user.get("is_approved") is True
+        return user and user.is_active

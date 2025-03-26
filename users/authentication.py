@@ -29,6 +29,42 @@ class User:
     @property
     def is_superuser(self):
         return self.role_type == 'super_admin'
+    @classmethod
+    def authenticate_user(cls, email, password):
+        # Hash the password (ensure this matches your hashing method)
+        hashed_password = cls.hash_password(password)
+        
+        try:
+            with connection.cursor() as cursor:
+                # Check user credentials and verify they are an artist
+                cursor.execute("""
+                    SELECT u.*, a.id AS artist_id 
+                    FROM users u
+                    LEFT JOIN artist a ON a.user_id = u.id
+                    WHERE u.email = %s 
+                    AND u.password = %s 
+                    AND u.role_type = 'artist'
+                    AND u.is_approved = TRUE
+                """, [email, hashed_password])
+                
+                user = cursor.fetchone()
+                
+                if user:
+                    # Convert to dictionary
+                    columns = [col[0] for col in cursor.description]
+                    return dict(zip(columns, user))
+                
+                return None
+        
+        except Exception as e:
+            print(f"Authentication error: {e}")
+            return None
+    
+    @staticmethod
+    def hash_password(password):
+        # Use SHA-256 for password hashing (replace with more secure method in production)
+        return hashlib.sha256(password.encode()).hexdigest()
+
 
 class JWTHandler:
     @staticmethod
@@ -63,31 +99,46 @@ class JWTHandler:
 
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
+        # Print out all authorization headers for debugging
+        print("All request headers:", request.META)
+        
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        print("Authorization Header:", auth_header)
+        
         if not auth_header.startswith('Bearer '):
+            print("No Bearer token found")
             return None
             
         token = auth_header.split(' ')[1]
         if not token:
+            print("Token is empty")
             return None
             
         payload = JWTHandler.decode_token(token)
+        print("Decoded Payload:", payload)
+        
         if payload is None:
+            print("Invalid or expired token")
             raise exceptions.AuthenticationFailed('Invalid token or token expired')
             
         user_id = payload.get('user_id')
-        user_dict = UserModel.get_user_by_id(user_id)  # Using your raw SQL method
+        print("User ID from token:", user_id)
+        
+        user_dict = UserModel.get_user_by_id(user_id)
+        print("User Dictionary:", user_dict)
         
         if not user_dict:
+            print("User not found")
             raise exceptions.AuthenticationFailed('User not found')
             
         if not user_dict.get('is_approved', False):
+            print("User not approved")
             raise exceptions.AuthenticationFailed('User not approved')
             
         # Convert the dictionary to a User object
         user = User(**user_dict)
             
-        return (user, token)  # Now returning a User object with necessary properties
+        return (user, token)
         
     def authenticate_header(self, request):
         return 'Bearer'
