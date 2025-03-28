@@ -54,18 +54,24 @@ class ArtistProfileView(APIView):
         """
         Update artist profile
         """
+        # Fetch the artist profile by the user ID
         artist = ArtistModel.get_artist_by_user_id(request.user.id)
+        
         if not artist:
             return Response({"error": "Artist profile not found"}, status=status.HTTP_404_NOT_FOUND)
         
+        # Get the data from the request (exclude first_release_year since it's removed)
         update_data = {
-            'first_release_year': request.data.get('first_release_year'),
+            'name': request.data.get('name'), 
+            'bio': request.data.get('bio'),
+            'nationality': request.data.get('nationality'),
             'photo_url': request.data.get('photo_url')
         }
-        
-        # Remove None values
+
+        # Remove None values from the data dictionary (optional fields will not be updated)
         update_data = {k: v for k, v in update_data.items() if v is not None}
-        
+
+        # Call the update method from the model to update the artist profile
         if ArtistModel.update_artist_profile(artist['id'], **update_data):
             return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
         

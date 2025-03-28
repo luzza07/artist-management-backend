@@ -187,7 +187,7 @@ class UserModel:
         with connection.cursor() as cursor:
             # Adjust this query based on your actual database schema for artist works
             cursor.execute("""
-                SELECT * FROM artist_works WHERE artist_id = %s 
+                SELECT * FROM artist WHERE user_id = %s 
                 ORDER BY created_at DESC;
             """, [artist_id])
             columns = [col[0] for col in cursor.description]

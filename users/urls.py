@@ -1,7 +1,7 @@
 from django.urls import path, include
 from .views.auth import SignupView, LoginView, RefreshTokenView
 from .views.approval import ApproveUserView, PendingUsersView
-from .views.dashboard import SuperAdminDashboardView, ArtistManagerDashboardView, ArtistDashboardView  # Import all the dashboard views
+from .views.dashboard import UnifiedDashboardView  
 
 # Authentication URLs
 auth_urlpatterns = [
@@ -18,14 +18,12 @@ admin_urlpatterns = [
 
 # Dashboard URLs
 dashboard_urlpatterns = [
-    path('super-admin/', SuperAdminDashboardView.as_view(), name='super_admin_dashboard'),
-    path('artist-manager/', ArtistManagerDashboardView.as_view(), name='artist_manager_dashboard'),
-    path('artist/', ArtistDashboardView.as_view(), name='artist_dashboard'),
+    path('', UnifiedDashboardView.as_view(), name='unified_dashboard'),
 ]
 
 # Combine all URL patterns
 urlpatterns = [
     path('auth/', include(auth_urlpatterns)),
     path('admin/', include(admin_urlpatterns)),
-    path('dashboard/', include(dashboard_urlpatterns)),  # Fixed here: included dashboard_urlpatterns correctly
+    path('dashboard/', include(dashboard_urlpatterns)),
 ]

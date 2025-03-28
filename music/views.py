@@ -10,7 +10,6 @@ from .serializers import MusicSerializer
 class MusicViewSet(APIView):
     permission_classes = [IsArtist]
 
-    # music/views.py
     def get(self, request, album_id):
         artist = self.get_artist_from_user(request.user.id)
         print(f"Debug - Artist ID: {artist['id']}, Album ID: {album_id}")  # Debug line
@@ -19,7 +18,7 @@ class MusicViewSet(APIView):
             print("Debug - Album ownership failed")  # Debug line
             return Response({"detail": "Album not found"}, status=404)
         
-        music = MusicModel.get_music_by_album(album_id, artist['id'])
+        music = MusicModel.get_music_by_album(album_id)
         print(f"Debug - Retrieved music: {music}")  # Debug line
         
         return Response(music)

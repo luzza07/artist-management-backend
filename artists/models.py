@@ -34,26 +34,31 @@ class ArtistModel:
                 return dict(zip(columns, row))
             return None
 
+   
+    
     @staticmethod
     def update_artist_profile(artist_id, **kwargs):
         """
-        Update artist profile details
+        Update artist profile details.
         """
-        allowed_fields = ['first_release_year', 'photo_url']
+        # Allowed fields for updating (removed 'first_release_year')
+        allowed_fields = ['name', 'bio', 'nationality', 'photo_url']
         update_fields = [f"{field} = %s" for field in kwargs.keys() if field in allowed_fields]
-        
+
         if not update_fields:
             return False
 
+        # Update the artist profile with the given fields
         with connection.cursor() as cursor:
             sql = f"""
-            UPDATE artist 
+            UPDATE artist
             SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s
             """
             params = list(kwargs.values()) + [artist_id]
             cursor.execute(sql, params)
             return cursor.rowcount > 0
+
 
 
 class AlbumModel:

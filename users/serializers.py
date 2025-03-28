@@ -7,10 +7,10 @@ class UserSignupSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
-    phone = serializers.CharField(max_length=15, required=False)
-    dob = serializers.DateField(required=False)
+    phone = serializers.CharField(max_length=15, required=True)
+    dob = serializers.DateField(required=True)
     gender = serializers.ChoiceField(choices=['m', 'f', 'o'])
-    address = serializers.CharField(max_length=255, required=False)
+    address = serializers.CharField(max_length=255, required=True)
     role_type = serializers.ChoiceField(choices=['super_admin', 'artist_manager', 'artist'])
     
     def validate(self, data):

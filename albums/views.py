@@ -25,7 +25,7 @@ class AlbumViewSet(APIView):
     def get_album_or_404(self, album_id, artist_id):
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT id, artist_id, name, release_year, photo_url
+                SELECT id, artist_id, name, release_year, genre, photo_url, tracklist, total_tracks, total_duration, created_at, updated_at
                 FROM albums
                 WHERE id = %s AND artist_id = %s
             """, [album_id, artist_id])
