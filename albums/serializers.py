@@ -5,7 +5,7 @@ class AlbumSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     artist_id = serializers.IntegerField()
     name = serializers.CharField(max_length=255)
-    release_year = serializers.DateField()
+    release_year = serializers.DateField(format="%Y-%m-%d")
     genre = serializers.ChoiceField(choices=["rnb", "country", "classic", "rock", "jazz","mix"])  
     photo_url = serializers.CharField(max_length=255, required=False, allow_null=True)
     tracklist = serializers.ListField(child=serializers.CharField(max_length=255), required=False, allow_null=True)
@@ -14,14 +14,7 @@ class AlbumSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     
-    def validate_release_year(self, value):
-        """ Ensure release_year is in the correct format (YYYY-MM-DD). """
-        if isinstance(value, str):
-            try:
-                return datetime.strptime(value, "%Y-%m-%d").date()
-            except ValueError:
-                raise serializers.ValidationError("Invalid date format. Use YYYY-MM-DD.")
-        return value 
+    
 
     def validate(self, data):
         """
