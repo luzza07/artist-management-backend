@@ -2,7 +2,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-
 from .models import ArtistModel, AlbumModel, MusicModel
 from .permissions import IsArtistOwner
 from users.permissions import IsArtist
@@ -10,8 +9,54 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from users.models import UserModel
+from django.db import connection
 from users.authentication import JWTHandler
+from users.permissions import IsArtistManager,IsSuperAdmin
+import csv
+from django.http import HttpResponse
 
+class ArtistMusicView(APIView):
+    permission_classes = [IsAuthenticated, IsArtistManager,IsSuperAdmin] 
+
+    def get(self, request, artist_id):
+        """
+        Fetch all songs for a particular artist across all albums.
+        """
+        # Fetch albums associated with the artist
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT id FROM albums
+                WHERE artist_id = %s
+            """, [artist_id])
+            
+            albums = cursor.fetchall()
+            
+            if not albums:
+                return Response({"error": "No albums found for this artist"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Get songs for each album
+            songs = []
+            for album in albums:
+                album_id = album[0]
+                cursor.execute("""
+                    SELECT id, title, genre, duration, track_number, release_date, cover_page 
+                    FROM music
+                    WHERE album_id = %s
+                    ORDER BY track_number
+                """, [album_id])
+                album_songs = cursor.fetchall()
+                for song in album_songs:
+                    songs.append({
+                        "id": song[0],  # Song ID
+                        "title": song[1],  # Song Title
+                        "genre": song[2],  # Song Genre
+                        "duration": str(song[3]),  # Song Duration as string
+                        "track_number": song[4],  # Track Number
+                        "release_date": song[5],  # Release Date
+                        "cover_page": song[6],  # Cover Image URL or Path
+                    })
+
+        return Response(songs, status=status.HTTP_200_OK)
 class ArtistLoginView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -148,3 +193,50 @@ class MusicView(APIView):
         
         tracks = MusicModel.get_album_tracks(album_id)
         return Response(tracks, status=status.HTTP_200_OK)
+    # 🚀 CSV EXPORT ARTISTS
+class ExportArtistsCSVView(APIView):
+    permission_classes = [IsAuthenticated, IsArtistManager]
+
+    def get(self, request):
+        """
+        Export all artists as a CSV file.
+        """
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="artists.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(["ID", "Name", "Bio", "Nationality"])
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT id, name, bio, nationality FROM artist_model")
+            artists = cursor.fetchall()
+
+        for artist in artists:
+            writer.writerow(artist)
+
+        return response
+# 🚀 CSV IMPORT ARTISTS
+class ImportArtistsCSVView(APIView):
+    permission_classes = [IsAuthenticated, IsArtistManager]
+
+    def post(self, request):
+        """
+        Import artists from a CSV file.
+        """
+        file = request.FILES.get("file")
+        if not file:
+            return Response({"error": "CSV file is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        decoded_file = file.read().decode("utf-8").splitlines()
+        reader = csv.reader(decoded_file)
+        next(reader)  # Skip header row
+
+        with connection.cursor() as cursor:
+            for row in reader:
+                cursor.execute(
+                    "INSERT INTO artist_model (name, bio, nationality) VALUES (%s, %s, %s)",
+                    (row[0], row[1], row[2]),
+                )
+
+        return Response({"message": "Artists imported successfully"}, status=status.HTTP_201_CREATED)
+

@@ -77,10 +77,11 @@ class UnifiedDashboardView(APIView):
         return {
             "total_users": total_users,
             "total_approved_artists": total_approved_artists,
+            "users_by_role": users_by_role,
             "system_overview": {
                 "total_albums": total_albums,
                 "total_tracks": total_tracks,
-                "users_by_role": users_by_role,
+                
             }
         }
 

@@ -8,7 +8,7 @@ from users.serializers import UserApprovalSerializer, PendingUsersSerializer
 from users.authentication import JWTAuthentication
 
 class ApproveUserView(APIView):
-    """
+    """s
     Handles user approval by super_admin.
     """
     authentication_classes = [JWTAuthentication]
